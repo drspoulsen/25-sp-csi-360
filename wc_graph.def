@@ -1,0 +1,95 @@
+% This file includes all the settings for the environment {wc_graph}.
+% Written by Nathaniel Schwartz
+% Spring 2017
+% You can include it by typing "\input{wc_graph}" in your class file.
+
+% This is the setup for the wc_graph environment below
+\tikzset{%
+  pics/closed/.style={code={%
+    \draw[very thick, blue, fill] (0,0) circle [radius=.08];
+  }},
+  pics/open/.style={code={%
+    \draw[very thick, blue, fill=white] (0,0) circle [radius=.08];
+  }},
+  pics/mypoint/.default=blue,
+  draw/.append style={very thick, blue},
+  >=stealth,
+}
+
+% This is the setup for the wcgraph environment below
+\pgfkeys{/mygraph/.is family, /mygraph,
+  xmin/.initial = -3,         % defaults for xmin, xmax, ymin,ymax
+  xmax/.initial =  3,
+  ymin/.initial = -3,
+  ymax/.initial =  3,
+  ylabel/.initial = f(x),     % default function name
+  xlabel/.initial = x,        % default independent variable
+  scale/.initial = 0.9,       % tikzpicture scale
+  xtics/.initial = {1},       % list of marked coordinates on x-axis
+  ytics/.initial = {1},       % list of marked coordinates on y-axis
+  xticsloc/.initial = below,  % default location for tick labels
+  yticsloc/.initial = left,
+  helplines/.initial = draw,  % Default to draw the help lines
+  xaxis/.initial = on,        % Default to show horizontal axis
+  yaxis/.initial = on,        % Default to show vertical axis
+  xscale/.initial = 1,
+  yscale/.initial = 1,
+  tics/.initial = on,        % Draw tic marks (set to off otherwise)
+}
+
+% A new command to grab values from pgfkeys above
+\newcommand\getVal[1]{\pgfkeysvalueof{/mygraph/#1}}
+
+% A command to draw helplines. To not draw them, pass the option "hide"
+\newcommand{\helplines}[1]{
+  \ifthenelse{\equal{#1}{draw}}{
+    \draw[help lines] (\getVal{xmin},\getVal{ymin}) grid (\getVal{xmax},\getVal{ymax});
+  }{}
+}
+
+% The graph environment with optional arguments for changing defaults
+\newenvironment{wc_graph}[1][]%
+   {\pgfkeys{/mygraph, #1}% process settings
+    \begin{tikzpicture}[
+        scale=\getVal{scale},
+        xscale=\getVal{xscale},
+        yscale=\getVal{yscale},
+        myaxes/.style={thick, black, >=stealth},
+      ]
+      \helplines{\getVal{helplines}}
+      \ifthenelse{\equal{\getVal{yaxis}}{on}}{
+        \draw[myaxes, ->] (0,\getVal{ymin}) to (0,\getVal{ymax});
+        \node at (0,\getVal{ymax} + .3) {$\getVal{ylabel}$};
+        \xdef\ytics{\getVal{ytics}}
+        \ifthenelse{\equal{\getVal{tics}}{on}}{
+          \foreach \y in \ytics {
+            \draw[black] (0,\y) node[ left]{\small$\y$};
+          }
+          \foreach \y in {\getVal{ymin},...,\getVal{ymax}}{
+            \draw[black, thin, shift={(0,\y)}] (1pt,0pt) -- (-1pt,0pt);
+          }
+        }{}
+      }{}
+      \ifthenelse{\equal{\getVal{xaxis}}{on}}{
+        \draw[myaxes, ->] (\getVal{xmin},0) -- (\getVal{xmax},0);
+        \node at (\getVal{xmax} + .3,0) {$\getVal{xlabel}$};
+        \xdef\xtics{\getVal{xtics}} % Can't use this directly for some reason
+        \ifthenelse{\equal{\getVal{tics}}{on}}{
+          \foreach \x in \xtics {
+            \draw[black] (\x,0) node [\getVal{xticsloc}]{\small$\x$};
+          }
+          \foreach \x in {\getVal{xmin},...,\getVal{xmax}}{
+            \draw[black, thin, shift={(\x,0)}] (0pt,1pt) -- (0pt,-1pt);
+          }
+        }{}
+      }{}
+    }
+    {\end{tikzpicture}}
+
+% An example of usage:
+% \begin{wcgraph}[helplines=draw, ylabel=g(x), xmin=-4, xmax=4, scale=1, xtics={1,3}, ytics={1,2,3}]
+%   \draw[domain=-1.828:1, smooth] plot ({\x}, {-0.5*(\x-1)^2 + 2});
+%   \draw[domain=1:2.732, smooth] plot ({\x}, {-1*(\x-1)^2 + 1});
+%   \pic at (1,2) {closed};
+%   \pic at (1,1) {open};
+% \end{wcgraph}
